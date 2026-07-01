@@ -10,7 +10,7 @@ export default function Navbar() {
         </a>
 
         <a
-          href="#sign-in"
+          href="/login"
           className="rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-gray-300 transition-all hover:border-neon-purple/50 hover:text-white hover:shadow-neon"
         >
           Sign In
