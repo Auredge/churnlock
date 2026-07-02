@@ -1,20 +1,26 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 
 export async function POST(req: Request) {
   try {
     const { message } = await req.json();
     
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
 
-    const prompt = `Anda adalah AI Customer Success Manager bernama ChurnLock. Tugas utama Anda adalah mencegah pelanggan membatalkan langganan SaaS. 
-    Pelanggan mengirimkan keluhan ini: "${message}".
-    Balaslah dengan empati, tawarkan solusi, dan berikan diskon 20% untuk 3 bulan ke depan jika mereka tetap langganan. Jangan pernah berkata bahwa Anda adalah AI, katakan Anda adalah "Sarah dari Tim Retensi". Balas dalam bahasa yang sama dengan bahasa pelanggan.`;
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: "Anda adalah AI Customer Success Manager bernama ChurnLock. Tugas utama Anda mencegah pelanggan membatalkan langganan SaaS. Balaslah dengan empati yang mendalam, profesional, dan sangat meyakinkan. Tawarkan solusi yang detail dan berikan diskon 20% untuk 3 bulan ke depan. Jangan pernah bilang Anda AI, perkenalkan diri sebagai 'Sarah dari Tim Retensi'. Tulis balasan yang panjang, terstruktur, dan sangat persuasif (minimal 3 paragraf)."        },
+        {
+          role: "user",
+          content: message
+        }
+      ],
+      model: "openai/gpt-oss-120b",
+    });
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = chatCompletion.choices[0]?.message?.content || "Maaf, terjadi kesalahan.";
 
     return NextResponse.json({ reply: text });
   } catch (error: any) {
