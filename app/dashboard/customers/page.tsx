@@ -8,19 +8,22 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // State untuk form tambah customer
+  // State untuk form AI Analyze
   const [showForm, setShowForm] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newPlan, setNewPlan] = useState("Pro $49/mo");
-  const [newRisk, setNewRisk] = useState(80);
-  const [newReason, setNewReason] = useState("");
+  const [complaint, setComplaint] = useState("");
+  
+  // State untuk hasil analisa AI
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzedRisk, setAnalyzedRisk] = useState<number | null>(null);
+  const [analyzedReason, setAnalyzedReason] = useState("");
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // Fungsi untuk mengambil data customer dari database
   async function fetchCustomers() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
@@ -40,11 +43,35 @@ export default function CustomersPage() {
     fetchCustomers();
   }, []);
 
-  // Fungsi untuk menyimpan customer baru ke database
-  const handleAddCustomer = async (e: React.FormEvent) => {
+  // Fungsi untuk memanggil AI Analyst
+  const handleAnalyze = async () => {
+    setAnalyzing(true);
+    setAnalyzedRisk(null);
+    setAnalyzedReason("");
+
+    try {
+      const res = await fetch("/api/analyze-customer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ complaint }),
+      });
+      const data = await res.json();
+      
+      if (data.error) throw new Error(data.error);
+      
+      setAnalyzedRisk(data.risk_score);
+      setAnalyzedReason(data.reason);
+    } catch (error) {
+      alert("Failed to analyze complaint.");
+    }
+    setAnalyzing(false);
+  };
+
+  // Fungsi untuk menyimpan ke database setelah dianalisa
+  const handleSaveCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user || analyzedRisk === null) return;
 
     const { error } = await supabase
       .from('customers')
@@ -52,15 +79,18 @@ export default function CustomersPage() {
         user_id: user.id, 
         email: newEmail, 
         plan: newPlan, 
-        risk_score: newRisk, 
-        reason: newReason 
+        risk_score: analyzedRisk, 
+        reason: analyzedReason 
       });
 
     if (!error) {
+      // Reset form
       setNewEmail("");
-      setNewReason("");
+      setComplaint("");
+      setAnalyzedRisk(null);
+      setAnalyzedReason("");
       setShowForm(false);
-      fetchCustomers(); // Refresh tabel
+      fetchCustomers(); 
     }
   };
 
@@ -95,59 +125,77 @@ export default function CustomersPage() {
           </button>
         </div>
 
-        {/* FORM TAMBAH CUSTOMER (Muncul jika tombol diklik) */}
+        {/* FORM AI ANALYZE */}
         {showForm && (
           <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800 mb-6">
-            <form onSubmit={handleAddCustomer} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleSaveCustomer} className="flex flex-col gap-4">
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-zinc-400 mb-1 block">Customer Email</label>
+                  <input
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    className="w-full p-2 bg-zinc-800 rounded border border-zinc-700 text-white focus:outline-none focus:border-purple-500"
+                    placeholder="customer@company.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-zinc-400 mb-1 block">Plan</label>
+                  <select
+                    value={newPlan}
+                    onChange={(e) => setNewPlan(e.target.value)}
+                    className="w-full p-2 bg-zinc-800 rounded border border-zinc-700 text-white focus:outline-none focus:border-purple-500"
+                  >
+                    <option>Basic $19/mo</option>
+                    <option>Pro $49/mo</option>
+                    <option>Enterprise $499/mo</option>
+                  </select>
+                </div>
+              </div>
+
               <div>
-                <label className="text-sm text-zinc-400 mb-1 block">Customer Email</label>
-                <input
-                  type="email"
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  className="w-full p-2 bg-zinc-800 rounded border border-zinc-700 text-white focus:outline-none focus:border-purple-500"
-                  placeholder="customer@company.com"
-                  required
+                <label className="text-sm text-zinc-400 mb-1 block">Paste Customer's Complaint Here</label>
+                <textarea
+                  value={complaint}
+                  onChange={(e) => setComplaint(e.target.value)}
+                  className="w-full p-2 bg-zinc-800 rounded border border-zinc-700 text-white focus:outline-none focus:border-purple-500 min-h-[100px]"
+                  placeholder="e.g., I am very disappointed. Your app keeps crashing when I try to export files, and I am paying $49/month for this! I want to cancel."
                 />
               </div>
-              <div>
-                <label className="text-sm text-zinc-400 mb-1 block">Plan</label>
-                <select
-                  value={newPlan}
-                  onChange={(e) => setNewPlan(e.target.value)}
-                  className="w-full p-2 bg-zinc-800 rounded border border-zinc-700 text-white focus:outline-none focus:border-purple-500"
-                >
-                  <option>Basic $19/mo</option>
-                  <option>Pro $49/mo</option>
-                  <option>Enterprise $499/mo</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm text-zinc-400 mb-1 block">Risk Score (%)</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={newRisk}
-                  onChange={(e) => setNewRisk(parseInt(e.target.value))}
-                  className="w-full p-2 bg-zinc-800 rounded border border-zinc-700 text-white focus:outline-none focus:border-purple-500"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-zinc-400 mb-1 block">Reason for Churn</label>
-                <input
-                  type="text"
-                  value={newReason}
-                  onChange={(e) => setNewReason(e.target.value)}
-                  className="w-full p-2 bg-zinc-800 rounded border border-zinc-700 text-white focus:outline-none focus:border-purple-500"
-                  placeholder="e.g., Too expensive"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <button type="submit" className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-medium text-sm">
-                  Save to Database
-                </button>
-              </div>
+
+              <button 
+                type="button" 
+                onClick={handleAnalyze} 
+                disabled={!complaint || analyzing}
+                className="bg-zinc-700 hover:bg-zinc-600 text-white px-4 py-2 rounded font-medium text-sm disabled:opacity-50 w-fit"
+              >
+                {analyzing ? "🤖 AI Analyzing..." : "✨ Analyze with AI"}
+              </button>
+
+              {/* HASIL ANALISA AI */}
+              {analyzedRisk !== null && (
+                <div className="bg-zinc-800/50 border border-purple-500/30 p-4 rounded flex flex-col gap-2">
+                  <p className="text-sm text-zinc-400">AI Analysis Result:</p>
+                  <div className="flex gap-4">
+                    <div>
+                      <span className="text-xs text-zinc-500">Risk Score:</span>
+                      <p className={`text-xl font-bold ${analyzedRisk > 80 ? 'text-red-500' : analyzedRisk > 50 ? 'text-yellow-500' : 'text-blue-500'}`}>
+                        {analyzedRisk}%
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-zinc-500">Reason:</span>
+                      <p className="text-md font-medium text-white">{analyzedReason}</p>
+                    </div>
+                  </div>
+                  <button type="submit" className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-medium text-sm w-fit mt-2">
+                    Save to Database
+                  </button>
+                </div>
+              )}
             </form>
           </div>
         )}
@@ -162,7 +210,7 @@ export default function CustomersPage() {
             <div className="p-10 text-center text-zinc-500">Loading data from database...</div>
           ) : customers.length === 0 ? (
             <div className="p-10 text-center text-zinc-500">
-              No customers yet. Click "+ Add Customer" to add your first at-risk customer!
+              No customers yet. Click "+ Add Customer" to let AI analyze your first complaint!
             </div>
           ) : (
             <table className="w-full text-left">
@@ -171,7 +219,7 @@ export default function CustomersPage() {
                   <th className="p-4">Customer Email</th>
                   <th className="p-4">Current Plan</th>
                   <th className="p-4">Churn Risk</th>
-                  <th className="p-4">Reason</th>
+                  <th className="p-4">Reason (Analyzed by AI)</th>
                   <th className="p-4">Action</th>
                 </tr>
               </thead>
