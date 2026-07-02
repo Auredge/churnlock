@@ -3,16 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 
-export default function DashboardPage() {
+export default function Home() {
   const [customerMessage, setCustomerMessage] = useState("");
   const [aiReply, setAiReply] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const negotiations = [
-    { email: "budi@startup.com", plan: "Pro $49/mo", reason: "Too expensive", status: "Saved" },
-    { email: "sarah@agency.io", plan: "Basic $19/mo", reason: "Missing features", status: "Lost" },
-    { email: "mike@corp.com", plan: "Enterprise", reason: "Switching to competitor", status: "Saved" },
-  ];
 
   const handleNegotiate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,116 +22,66 @@ export default function DashboardPage() {
       const data = await res.json();
       setAiReply(data.reply);
     } catch (error) {
-      setAiReply("Maaf, terjadi kesalahan saat menghubungi AI.");
+      setAiReply("Maaf, terjadi kesalahan.");
     }
     setLoading(false);
   };
 
   return (
-    <div className="flex min-h-screen bg-zinc-950 text-zinc-100">
-      {/* SIDEBAR */}
-      <aside className="w-64 bg-zinc-900 border-r border-zinc-800 p-6 flex flex-col justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-purple-500 mb-8">ChurnLock</h1>
-          <nav className="flex flex-col gap-4">
-            <Link href="/dashboard" className="text-purple-400 font-medium">Dashboard</Link>
-            <Link href="/dashboard/customers" className="text-zinc-400 hover:text-white transition">Customers</Link>
-            <Link href="/dashboard/settings" className="text-zinc-400 hover:text-white transition">Settings</Link>
-          </nav>
-        </div>
-        <form action="/auth/signout" method="post">
-          <button type="submit" className="text-sm text-zinc-500 hover:text-red-500 transition text-left">
-            Logout
+    <div className="min-h-screen bg-zinc-950 text-white">
+      {/* NAVBAR */}
+      <nav className="flex justify-between items-center p-6 border-b border-zinc-800">
+        <h1 className="text-2xl font-bold text-purple-500">ChurnLock</h1>
+        <Link href="/login" className="text-sm bg-zinc-800 hover:bg-zinc-700 px-4 py-2 rounded transition">
+          Sign In
+        </Link>
+      </nav>
+
+      {/* HERO + DEMO SECTION */}
+      <main className="flex flex-col items-center justify-center text-center px-6 py-20 max-w-5xl mx-auto">
+        <h2 className="text-4xl md:text-6xl font-bold mb-4 leading-tight">
+          Lock In Your Revenue. <br/>
+          <span className="text-purple-500">Stop Churn Instantly</span> with AI.
+        </h2>
+        <p className="text-lg text-zinc-400 mb-8 max-w-2xl">
+          ChurnLock acts as your automated customer success manager, negotiating with unhappy customers in real-time before they click cancel.
+        </p>
+        
+        <div className="flex gap-4 mb-16">
+          <Link href="/login" className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded font-medium">
+            Start Free Trial
+          </Link>
+          <button onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })} className="border border-zinc-700 hover:bg-zinc-800 px-6 py-3 rounded font-medium">
+            Try Live Demo
           </button>
-        </form>
-      </aside>
-
-      {/* KONTEN UTAMA */}
-      <main className="flex-1 p-10 overflow-y-auto">
-        <h2 className="text-3xl font-bold mb-8">Dashboard</h2>
-
-        {/* KARTU STATISTIK */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
-            <p className="text-zinc-400 text-sm mb-2">Revenue Saved</p>
-            <h3 className="text-3xl font-bold text-green-500">$12,450</h3>
-          </div>
-          <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
-            <p className="text-zinc-400 text-sm mb-2">Churns Prevented</p>
-            <h3 className="text-3xl font-bold text-purple-500">42</h3>
-          </div>
-          <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
-            <p className="text-zinc-400 text-sm mb-2">Success Rate</p>
-            <h3 className="text-3xl font-bold text-blue-500">87%</h3>
-          </div>
         </div>
 
-        {/* TABEL NEGOSIASI */}
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden mb-10">
-          <div className="p-6 border-b border-zinc-800">
-            <h3 className="text-xl font-semibold">Recent Negotiations</h3>
-          </div>
-          <table className="w-full text-left">
-            <thead className="bg-zinc-800/50 text-zinc-400 text-sm">
-              <tr>
-                <th className="p-4">Customer Email</th>
-                <th className="p-4">Plan</th>
-                <th className="p-4">Reason for Churn</th>
-                <th className="p-4">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {negotiations.map((item, index) => (
-                <tr key={index} className="border-b border-zinc-800/50 last:border-0">
-                  <td className="p-4 text-sm">{item.email}</td>
-                  <td className="p-4 text-sm text-zinc-400">{item.plan}</td>
-                  <td className="p-4 text-sm text-zinc-400">{item.reason}</td>
-                  <td className="p-4">
-                    {item.status === "Saved" ? (
-                      <span className="px-3 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded-full">Saved</span>
-                    ) : (
-                      <span className="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-medium rounded-full">Lost</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* KOTAK UJI COBA AI NEGOTIATOR */}
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6">
-          <h3 className="text-xl font-semibold mb-4 text-purple-400">🤖 Test AI Negotiator</h3>
-          <p className="text-zinc-400 text-sm mb-4">Tiru keluhan pelanggan di sini, lihat bagaimana AI ChurnLock menyelamatkan pelanggan Anda:</p>
+        {/* KOTAK DEMO LIVE */}
+        <div id="demo" className="w-full max-w-2xl bg-zinc-900 rounded-xl border border-zinc-800 p-8 text-left shadow-2xl">
+          <h3 className="text-xl font-semibold mb-2 text-purple-400">🤖 Try ChurnLock AI Live</h3>
+          <p className="text-zinc-400 text-sm mb-4">
+            Type a customer complaint as if they are trying to cancel their subscription:
+          </p>
           
-          <form onSubmit={handleNegotiate} className="flex gap-4 mb-4">
+          <form onSubmit={handleNegotiate} className="flex flex-col gap-3 mb-4">
             <input
               type="text"
               value={customerMessage}
               onChange={(e) => setCustomerMessage(e.target.value)}
-              placeholder="Contoh: Aplikasinya terlalu mahal, saya mau berhenti..."
-              className="flex-1 p-3 bg-zinc-800 rounded border border-zinc-700 text-white focus:outline-none focus:border-purple-500"
+              placeholder="e.g., Your app is too expensive, I want to cancel my plan."
+              className="p-3 bg-zinc-800 rounded border border-zinc-700 text-white focus:outline-none focus:border-purple-500"
               required
             />
             <button
               type="submit"
               disabled={loading}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded font-medium disabled:opacity-50"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded font-medium disabled:opacity-50 transition"
             >
-              {loading ? "Negotiating..." : "Negotiate"}
+              {loading ? "Negotiating..." : "Negotiate with AI"}
             </button>
           </form>
 
           {aiReply && (
             <div className="p-4 bg-zinc-800/50 rounded border border-zinc-700 text-zinc-200 whitespace-pre-wrap">
-              <span className="text-green-400 font-bold">AI ChurnLock:</span>
-              <br />
-              {aiReply}
-            </div>
-          )}
-        </div>
-
-      </main>
-    </div>
-  );
-}
+              <span className="text-green-400 font-bold text-sm">AI ChurnLock:</span>
+              <br
