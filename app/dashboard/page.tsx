@@ -11,8 +11,6 @@ function DashboardContent() {
   const [loading, setLoading] = useState(false);
   
   const [settings, setSettings] = useState({ agentName: "Sarah", companyName: "", customSolution: "A 20% discount" });
-  
-  // State untuk menyimpan riwayat negosiasi dari database
   const [negotiations, setNegotiations] = useState<any[]>([]);
 
   const searchParams = useSearchParams();
@@ -22,12 +20,10 @@ function DashboardContent() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // Ambil data settings dan riwayat negosiasi
   useEffect(() => {
     async function fetchData() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // Ambil settings
         const { data: settingsData } = await supabase
           .from('user_settings')
           .select('*')
@@ -42,19 +38,39 @@ function DashboardContent() {
           });
         }
 
-        // Ambil riwayat negosiasi
+        // Ambil 100 negosiasi terakhir untuk dihitung statistiknya
         const { data: negoData } = await supabase
           .from('negotiations')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
-          .limit(5);
+          .limit(100);
         
         setNegotiations(negoData || []);
       }
     }
     fetchData();
   }, [supabase]);
+
+  // LOGIKA HITUNG STATISTIK REAL
+  const totalNegosiasi = negotiations.length;
+  const savedNegosiasi = negotiations.filter(n => n.status === 'Saved').length;
+  const revenueSaved = savedNegosiasi * 49; // Asumsi harga $49/bulan
+  const successRate = totalNegosiasi > 0 ? Math.round((savedNegosiasi / totalNegosiasi) * 100) : 0;
+
+  // Fungsi untuk update status di database
+  const handleUpdateStatus = async (id: string, newStatus: string) => {
+    // Update di Supabase
+    await supabase
+      .from('negotiations')
+      .update({ status: newStatus })
+      .eq('id', id);
+
+    // Update di UI agar langsung berubah tanpa refresh
+    setNegotiations(prev => prev.map(item => 
+      item.id === id ? { ...item, status: newStatus } : item
+    ));
+  };
 
   const fetchNegotiation = async (messageToNegotiate: string, email: string = "manual_test@churnlock.app") => {
     setLoading(true);
@@ -73,7 +89,6 @@ function DashboardContent() {
       const data = await res.json();
       setAiReply(data.reply);
 
-      // Simpan ke database Supabase!
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: newNego } = await supabase
@@ -83,14 +98,13 @@ function DashboardContent() {
             customer_email: email,
             message: messageToNegotiate, 
             ai_reply: data.reply,
-            status: 'Pending' // Otomatis berstatus Pending
+            status: 'Pending'
           })
           .select('*')
           .single();
 
-        // Update tabel di layar agar muncul langsung tanpa refresh
         if (newNego) {
-          setNegotiations(prev => [newNego, ...prev].slice(0, 5));
+          setNegotiations(prev => [newNego, ...prev]);
         }
       }
     } catch (error) {
@@ -138,23 +152,23 @@ function DashboardContent() {
       <main className="flex-1 p-10 overflow-y-auto">
         <h2 className="text-3xl font-bold mb-8">Dashboard</h2>
 
-        {/* KARTU STATISTIK */}
+        {/* KARTU STATISTIK (SEKARANG DARI DATABASE) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
             <p className="text-zinc-400 text-sm mb-2">Revenue Saved</p>
-            <h3 className="text-3xl font-bold text-green-500">$12,450</h3>
+            <h3 className="text-3xl font-bold text-green-500">${revenueSaved}</h3>
           </div>
           <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
             <p className="text-zinc-400 text-sm mb-2">Churns Prevented</p>
-            <h3 className="text-3xl font-bold text-purple-500">42</h3>
+            <h3 className="text-3xl font-bold text-purple-500">{savedNegosiasi}</h3>
           </div>
           <div className="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
             <p className="text-zinc-400 text-sm mb-2">Success Rate</p>
-            <h3 className="text-3xl font-bold text-blue-500">87%</h3>
+            <h3 className="text-3xl font-bold text-blue-500">{successRate}%</h3>
           </div>
         </div>
 
-        {/* TABEL NEGOSIASI (SEKARANG DARI DATABASE) */}
+        {/* TABEL NEGOSIASI */}
         <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden mb-10">
           <div className="p-6 border-b border-zinc-800">
             <h3 className="text-xl font-semibold">Recent Negotiations</h3>
@@ -165,18 +179,19 @@ function DashboardContent() {
                 <th className="p-4">Customer Email</th>
                 <th className="p-4">Reason for Churn</th>
                 <th className="p-4">Status</th>
+                <th className="p-4">Actions</th> {/* KOLOM BARU */}
               </tr>
             </thead>
             <tbody>
               {negotiations.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="p-4 text-center text-zinc-500">No negotiations yet. Try the chat below!</td>
+                  <td colSpan={4} className="p-4 text-center text-zinc-500">No negotiations yet. Try the chat below!</td>
                 </tr>
               ) : (
-                negotiations.map((item) => (
+                negotiations.slice(0, 5).map((item) => (
                   <tr key={item.id} className="border-b border-zinc-800/50 last:border-0 hover:bg-zinc-800/30 transition">
                     <td className="p-4 text-sm font-medium text-white">{item.customer_email}</td>
-                    <td className="p-4 text-sm text-zinc-400 max-w-md truncate">{item.message}</td>
+                    <td className="p-4 text-sm text-zinc-400 max-w-xs truncate">{item.message}</td>
                     <td className="p-4">
                       {item.status === "Saved" ? (
                         <span className="px-3 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded-full">Saved</span>
@@ -184,6 +199,14 @@ function DashboardContent() {
                         <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 text-xs font-medium rounded-full">Pending</span>
                       ) : (
                         <span className="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-medium rounded-full">Lost</span>
+                      )}
+                    </td>
+                    <td className="p-4 flex gap-2">
+                      {item.status !== 'Saved' && (
+                        <button onClick={() => handleUpdateStatus(item.id, 'Saved')} className="text-xs bg-green-600/20 text-green-400 hover:bg-green-600/40 px-2 py-1 rounded">Mark Saved</button>
+                      )}
+                      {item.status !== 'Lost' && (
+                        <button onClick={() => handleUpdateStatus(item.id, 'Lost')} className="text-xs bg-red-600/20 text-red-400 hover:bg-red-600/40 px-2 py-1 rounded">Mark Lost</button>
                       )}
                     </td>
                   </tr>
