@@ -7,7 +7,8 @@ import Link from 'next/link';
 export default function SettingsPage() {
   const [agentName, setAgentName] = useState("Sarah");
   const [companyName, setCompanyName] = useState("");
-  const [discount, setDiscount] = useState("20%");
+  // Kita ganti discount jadi customSolution
+  const [customSolution, setCustomSolution] = useState("A 20% discount for 3 months");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -29,7 +30,8 @@ export default function SettingsPage() {
         if (data) {
           setAgentName(data.agent_name || "Sarah");
           setCompanyName(data.company_name || "");
-          setDiscount(data.discount || "20%");
+          // Ambil dari kolom 'discount' tapi taruh di state customSolution
+          setCustomSolution(data.discount || "A 20% discount for 3 months");
         }
       }
     }
@@ -48,19 +50,20 @@ export default function SettingsPage() {
       return;
     }
 
+    // Simpan ke kolom 'discount' agar tidak perlu ubah database
     const { error } = await supabase
       .from('user_settings')
       .upsert({ 
         user_id: user.id, 
         agent_name: agentName, 
         company_name: companyName, 
-        discount: discount 
+        discount: customSolution 
       });
 
     if (error) {
       setMessage("Failed to save: " + error.message);
     } else {
-      setMessage("Settings saved successfully! AI will use this persona.");
+      setMessage("Settings saved successfully! AI will use this strategy.");
     }
     setLoading(false);
   };
@@ -89,7 +92,7 @@ export default function SettingsPage() {
         <h2 className="text-3xl font-bold mb-8">AI Settings</h2>
         
         <div className="max-w-md bg-zinc-900 p-8 rounded-xl border border-zinc-800">
-          <p className="text-zinc-400 text-sm mb-6">Customize how the AI introduces itself when negotiating with your customers.</p>
+          <p className="text-zinc-400 text-sm mb-6">Customize how the AI introduces itself and what solutions it can offer to save your customers.</p>
           
           <form onSubmit={handleSave} className="flex flex-col gap-4">
             <div>
@@ -115,14 +118,14 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="text-sm text-zinc-400 mb-1 block">Discount Offered</label>
-              <input
-                type="text"
-                value={discount}
-                onChange={(e) => setDiscount(e.target.value)}
-                className="w-full p-3 bg-zinc-800 rounded border border-zinc-700 text-white focus:outline-none focus:border-purple-500"
-                placeholder="e.g., 15%"
+              <label className="text-sm text-zinc-400 mb-1 block">Custom Retention Strategy</label>
+              <textarea
+                value={customSolution}
+                onChange={(e) => setCustomSolution(e.target.value)}
+                className="w-full p-3 bg-zinc-800 rounded border border-zinc-700 text-white focus:outline-none focus:border-purple-500 min-h-[100px]"
+                placeholder="e.g., Offer a 15% discount, or offer a free 1-on-1 onboarding session, or pause their account for 1 month."
               />
+              <p className="text-xs text-zinc-500 mt-1">Tell the AI what it is allowed to offer to save the customer.</p>
             </div>
 
             <button

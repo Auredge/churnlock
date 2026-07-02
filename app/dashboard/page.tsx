@@ -9,15 +9,14 @@ export default function DashboardPage() {
   const [aiReply, setAiReply] = useState("");
   const [loading, setLoading] = useState(false);
   
-  // State untuk menyimpan data settings
-  const [settings, setSettings] = useState({ agentName: "Sarah", companyName: "", discount: "20%" });
+  // Ganti discount jadi customSolution
+  const [settings, setSettings] = useState({ agentName: "Sarah", companyName: "", customSolution: "A 20% discount" });
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // Ambil data settings saat halaman dibuka
   useEffect(() => {
     async function fetchSettings() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -32,7 +31,7 @@ export default function DashboardPage() {
           setSettings({
             agentName: data.agent_name || "Sarah",
             companyName: data.company_name || "",
-            discount: data.discount || "20%"
+            customSolution: data.discount || "A 20% discount"
           });
         }
       }
@@ -55,12 +54,11 @@ export default function DashboardPage() {
       const res = await fetch("/api/negotiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Kita kirim data settings bersama pesan pelanggan
         body: JSON.stringify({ 
           message: customerMessage,
           agentName: settings.agentName,
           companyName: settings.companyName,
-          discount: settings.discount
+          customSolution: settings.customSolution
         }),
       });
       const data = await res.json();
