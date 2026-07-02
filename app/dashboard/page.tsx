@@ -5,13 +5,15 @@ import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-// Kita pindahkan isi halaman ke dalam komponen ini
 function DashboardContent() {
   const [customerMessage, setCustomerMessage] = useState("");
   const [aiReply, setAiReply] = useState("");
   const [loading, setLoading] = useState(false);
   
   const [settings, setSettings] = useState({ agentName: "Sarah", companyName: "", customSolution: "A 20% discount" });
+  
+  // State untuk menyimpan riwayat negosiasi dari database
+  const [negotiations, setNegotiations] = useState<any[]>([]);
 
   const searchParams = useSearchParams();
 
@@ -20,29 +22,41 @@ function DashboardContent() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  // Ambil data settings dan riwayat negosiasi
   useEffect(() => {
-    async function fetchSettings() {
+    async function fetchData() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data } = await supabase
+        // Ambil settings
+        const { data: settingsData } = await supabase
           .from('user_settings')
           .select('*')
           .eq('user_id', user.id)
           .single();
         
-        if (data) {
+        if (settingsData) {
           setSettings({
-            agentName: data.agent_name || "Sarah",
-            companyName: data.company_name || "",
-            customSolution: data.discount || "A 20% discount"
+            agentName: settingsData.agent_name || "Sarah",
+            companyName: settingsData.company_name || "",
+            customSolution: settingsData.discount || "A 20% discount"
           });
         }
+
+        // Ambil riwayat negosiasi
+        const { data: negoData } = await supabase
+          .from('negotiations')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        setNegotiations(negoData || []);
       }
     }
-    fetchSettings();
+    fetchData();
   }, [supabase]);
 
-  const fetchNegotiation = async (messageToNegotiate: string) => {
+  const fetchNegotiation = async (messageToNegotiate: string, email: string = "manual_test@churnlock.app") => {
     setLoading(true);
     setAiReply("");
     try {
@@ -58,6 +72,27 @@ function DashboardContent() {
       });
       const data = await res.json();
       setAiReply(data.reply);
+
+      // Simpan ke database Supabase!
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: newNego } = await supabase
+          .from('negotiations')
+          .insert({ 
+            user_id: user.id, 
+            customer_email: email,
+            message: messageToNegotiate, 
+            ai_reply: data.reply,
+            status: 'Pending' // Otomatis berstatus Pending
+          })
+          .select('*')
+          .single();
+
+        // Update tabel di layar agar muncul langsung tanpa refresh
+        if (newNego) {
+          setNegotiations(prev => [newNego, ...prev].slice(0, 5));
+        }
+      }
     } catch (error) {
       setAiReply("Maaf, terjadi kesalahan saat menghubungi AI.");
     }
@@ -65,13 +100,13 @@ function DashboardContent() {
   };
 
   useEffect(() => {
-    const email = searchParams.get('email');
+    const email = searchParams.get('email') || "customer@unknown.com";
     const reason = searchParams.get('reason');
     
-    if (email && reason) {
+    if (reason) {
       const autoMessage = `I am ${email} and I want to cancel because ${reason}.`;
       setCustomerMessage(autoMessage);
-      fetchNegotiation(autoMessage);
+      fetchNegotiation(autoMessage, email);
     }
   }, [searchParams]);
 
@@ -79,12 +114,6 @@ function DashboardContent() {
     e.preventDefault();
     fetchNegotiation(customerMessage);
   };
-
-  const negotiations = [
-    { email: "alex@techcorp.com", plan: "Enterprise $499/mo", reason: "Too many bugs", status: "Pending" },
-    { email: "cole@startup.com", plan: "Pro $49/mo", reason: "Too expensive", status: "Saved" },
-    { email: "sarah@agency.io", plan: "Basic $19/mo", reason: "Missing features", status: "Lost" },
-  ];
 
   return (
     <div className="flex min-h-screen bg-zinc-950 text-zinc-100">
@@ -125,7 +154,7 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* TABEL NEGOSIASI */}
+        {/* TABEL NEGOSIASI (SEKARANG DARI DATABASE) */}
         <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden mb-10">
           <div className="p-6 border-b border-zinc-800">
             <h3 className="text-xl font-semibold">Recent Negotiations</h3>
@@ -134,28 +163,32 @@ function DashboardContent() {
             <thead className="bg-zinc-800/50 text-zinc-400 text-sm">
               <tr>
                 <th className="p-4">Customer Email</th>
-                <th className="p-4">Plan</th>
                 <th className="p-4">Reason for Churn</th>
                 <th className="p-4">Status</th>
               </tr>
             </thead>
             <tbody>
-              {negotiations.map((item, index) => (
-                <tr key={index} className="border-b border-zinc-800/50 last:border-0">
-                  <td className="p-4 text-sm">{item.email}</td>
-                  <td className="p-4 text-sm text-zinc-400">{item.plan}</td>
-                  <td className="p-4 text-sm text-zinc-400">{item.reason}</td>
-                  <td className="p-4">
-                  {item.status === "Saved" ? (
-                    <span className="px-3 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded-full">Saved</span>
-                  ) : item.status === "Pending" ? (
-                    <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 text-xs font-medium rounded-full">Pending</span>
-                  ) : (
-                    <span className="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-medium rounded-full">Lost</span>
-                  )}
-                </td>
+              {negotiations.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="p-4 text-center text-zinc-500">No negotiations yet. Try the chat below!</td>
                 </tr>
-              ))}
+              ) : (
+                negotiations.map((item) => (
+                  <tr key={item.id} className="border-b border-zinc-800/50 last:border-0 hover:bg-zinc-800/30 transition">
+                    <td className="p-4 text-sm font-medium text-white">{item.customer_email}</td>
+                    <td className="p-4 text-sm text-zinc-400 max-w-md truncate">{item.message}</td>
+                    <td className="p-4">
+                      {item.status === "Saved" ? (
+                        <span className="px-3 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded-full">Saved</span>
+                      ) : item.status === "Pending" ? (
+                        <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 text-xs font-medium rounded-full">Pending</span>
+                      ) : (
+                        <span className="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-medium rounded-full">Lost</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -200,7 +233,6 @@ function DashboardContent() {
   );
 }
 
-// Bungkus komponen utama dengan Suspense di sini
 export default function DashboardPage() {
   return (
     <Suspense fallback={<div className="flex min-h-screen bg-zinc-950 items-center justify-center text-zinc-500">Loading dashboard...</div>}>
