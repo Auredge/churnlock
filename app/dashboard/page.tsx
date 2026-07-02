@@ -40,7 +40,7 @@ export default function DashboardPage() {
   }, [supabase]);
 
   const negotiations = [
-    { email: "budi@startup.com", plan: "Pro $49/mo", reason: "Too expensive", status: "Saved" },
+    { email: "cole@startup.com", plan: "Pro $49/mo", reason: "Too expensive", status: "Saved" },
     { email: "sarah@agency.io", plan: "Basic $19/mo", reason: "Missing features", status: "Lost" },
     { email: "mike@corp.com", plan: "Enterprise", reason: "Switching to competitor", status: "Saved" },
   ];

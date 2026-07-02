@@ -8,13 +8,11 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // State untuk form AI Analyze
   const [showForm, setShowForm] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newPlan, setNewPlan] = useState("Pro $49/mo");
   const [complaint, setComplaint] = useState("");
   
-  // State untuk hasil analisa AI
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzedRisk, setAnalyzedRisk] = useState<number | null>(null);
   const [analyzedReason, setAnalyzedReason] = useState("");
@@ -43,7 +41,6 @@ export default function CustomersPage() {
     fetchCustomers();
   }, []);
 
-  // Fungsi untuk memanggil AI Analyst
   const handleAnalyze = async () => {
     setAnalyzing(true);
     setAnalyzedRisk(null);
@@ -67,7 +64,6 @@ export default function CustomersPage() {
     setAnalyzing(false);
   };
 
-  // Fungsi untuk menyimpan ke database setelah dianalisa
   const handleSaveCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     const { data: { user } } = await supabase.auth.getUser();
@@ -84,13 +80,28 @@ export default function CustomersPage() {
       });
 
     if (!error) {
-      // Reset form
       setNewEmail("");
       setComplaint("");
       setAnalyzedRisk(null);
       setAnalyzedReason("");
       setShowForm(false);
       fetchCustomers(); 
+    }
+  };
+
+  // FUNGSI DELETE BARU DI SINI
+  const handleDeleteCustomer = async (customerId: string) => {
+    if (window.confirm("Are you sure you want to delete this customer?")) {
+      const { error } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', customerId);
+
+      if (!error) {
+        fetchCustomers(); // Refresh tabel setelah dihapus
+      } else {
+        alert("Failed to delete customer.");
+      }
     }
   };
 
@@ -175,7 +186,6 @@ export default function CustomersPage() {
                 {analyzing ? "🤖 AI Analyzing..." : "✨ Analyze with AI"}
               </button>
 
-              {/* HASIL ANALISA AI */}
               {analyzedRisk !== null && (
                 <div className="bg-zinc-800/50 border border-purple-500/30 p-4 rounded flex flex-col gap-2">
                   <p className="text-sm text-zinc-400">AI Analysis Result:</p>
@@ -220,7 +230,7 @@ export default function CustomersPage() {
                   <th className="p-4">Current Plan</th>
                   <th className="p-4">Churn Risk</th>
                   <th className="p-4">Reason (Analyzed by AI)</th>
-                  <th className="p-4">Action</th>
+                  <th className="p-4">Actions</th> {/* UBAH JADI ACTIONS */}
                 </tr>
               </thead>
               <tbody>
@@ -240,13 +250,20 @@ export default function CustomersPage() {
                       </div>
                     </td>
                     <td className="p-4 text-sm text-zinc-400">{item.reason}</td>
-                    <td className="p-4">
+                    <td className="p-4 flex gap-2">
                       <Link 
                         href="/dashboard" 
                         className="text-xs bg-purple-600/20 text-purple-400 hover:bg-purple-600/40 px-3 py-1 rounded font-medium transition"
                       >
-                        Run AI Negotiator
+                        Negotiate
                       </Link>
+                      {/* TOMBOL DELETE BARU DI SINI */}
+                      <button 
+                        onClick={() => handleDeleteCustomer(item.id)}
+                        className="text-xs bg-red-600/20 text-red-400 hover:bg-red-600/40 px-3 py-1 rounded font-medium transition"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}
