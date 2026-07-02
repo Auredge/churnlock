@@ -140,7 +140,10 @@ export default function Home() {
         {/* PRICING SECTION */}
         <div className="w-full max-w-5xl mb-24">
           <h3 className="text-3xl font-bold mb-10 text-center">Simple, transparent pricing</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {/* PRICING SECTION */}
+        <div className="w-full max-w-3xl mb-24"> {/* Lebar dikurangi agar 2 kartu pas di tengah */}
+          <h3 className="text-3xl font-bold mb-10 text-center">Simple, transparent pricing</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             {/* Starter */}
             <div className="bg-zinc-900 p-8 rounded-xl border border-zinc-800 flex flex-col">
               <h4 className="text-xl font-semibold mb-2">Starter</h4>
@@ -149,7 +152,7 @@ export default function Home() {
               <ul className="text-zinc-400 text-sm space-y-2 mb-8 flex-grow">
                 <li>✅ 100 AI Negotiations/mo</li>
                 <li>✅ 1 Team Member</li>
-                <li>✅ Basic Analytics</li>
+                <li>✅ Basic Churn Analytics</li>
               </ul>
               <Link href="/login" className="text-center border border-zinc-700 hover:bg-zinc-800 px-4 py-2 rounded font-medium transition">
                 Get Started
@@ -157,7 +160,7 @@ export default function Home() {
             </div>
 
             {/* Pro */}
-            <div className="bg-zinc-900 p-8 rounded-xl border-2 border-purple-600 flex flex-col relative shadow-2xl">
+            <div className="bg-zinc-900 p-8 rounded-xl border-2 border-purple-600 flex flex-col relative shadow-2xl md:scale-105"> {/* Sedikit lebih besar */}
               <span className="absolute top-0 right-0 bg-purple-600 text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-xl">MOST POPULAR</span>
               <h4 className="text-xl font-semibold mb-2">Pro</h4>
               <p className="text-zinc-400 text-sm mb-6">For growing SaaS teams</p>
@@ -170,22 +173,6 @@ export default function Home() {
               </ul>
               <Link href="/login" className="text-center bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded font-medium transition">
                 Start Free Trial
-              </Link>
-            </div>
-
-            {/* Enterprise */}
-            <div className="bg-zinc-900 p-8 rounded-xl border border-zinc-800 flex flex-col">
-              <h4 className="text-xl font-semibold mb-2">Enterprise</h4>
-              <p className="text-zinc-400 text-sm mb-6">For large organizations</p>
-              <p className="text-4xl font-bold mb-6">Custom</p>
-              <ul className="text-zinc-400 text-sm space-y-2 mb-8 flex-grow">
-                <li>✅ Unlimited Everything</li>
-                <li>✅ Dedicated Account Manager</li>
-                <li>✅ Custom API Integrations</li>
-                <li>✅ 99.9% SLA Guarantee</li>
-              </ul>
-              <Link href="/login" className="text-center border border-zinc-700 hover:bg-zinc-800 px-4 py-2 rounded font-medium transition">
-                Contact Sales
               </Link>
             </div>
           </div>
