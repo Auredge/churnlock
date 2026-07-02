@@ -1,12 +1,44 @@
 "use client";
 
+import { createBrowserClient } from '@supabase/ssr';
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function DashboardPage() {
   const [customerMessage, setCustomerMessage] = useState("");
   const [aiReply, setAiReply] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  // State untuk menyimpan data settings
+  const [settings, setSettings] = useState({ agentName: "Sarah", companyName: "", discount: "20%" });
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // Ambil data settings saat halaman dibuka
+  useEffect(() => {
+    async function fetchSettings() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from('user_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (data) {
+          setSettings({
+            agentName: data.agent_name || "Sarah",
+            companyName: data.company_name || "",
+            discount: data.discount || "20%"
+          });
+        }
+      }
+    }
+    fetchSettings();
+  }, [supabase]);
 
   const negotiations = [
     { email: "budi@startup.com", plan: "Pro $49/mo", reason: "Too expensive", status: "Saved" },
@@ -23,7 +55,13 @@ export default function DashboardPage() {
       const res = await fetch("/api/negotiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: customerMessage }),
+        // Kita kirim data settings bersama pesan pelanggan
+        body: JSON.stringify({ 
+          message: customerMessage,
+          agentName: settings.agentName,
+          companyName: settings.companyName,
+          discount: settings.discount
+        }),
       });
       const data = await res.json();
       setAiReply(data.reply);
@@ -108,7 +146,10 @@ export default function DashboardPage() {
         {/* KOTAK UJI COBA AI NEGOTIATOR */}
         <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6">
           <h3 className="text-xl font-semibold mb-4 text-purple-400">🤖 Test AI Negotiator</h3>
-          <p className="text-zinc-400 text-sm mb-4">Tiru keluhan pelanggan di sini, lihat bagaimana AI ChurnLock menyelamatkan pelanggan Anda:</p>
+          <p className="text-zinc-400 text-sm mb-4">
+            AI is currently acting as: <span className="text-purple-500 font-bold">{settings.agentName}</span> from <span className="text-purple-500 font-bold">{settings.companyName || 'Your Company'}</span>. 
+            <Link href="/dashboard/settings" className="text-blue-400 hover:underline ml-2">(Change)</Link>
+          </p>
           
           <form onSubmit={handleNegotiate} className="flex gap-4 mb-4">
             <input
