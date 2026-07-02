@@ -251,12 +251,12 @@ export default function CustomersPage() {
                     </td>
                     <td className="p-4 text-sm text-zinc-400">{item.reason}</td>
                     <td className="p-4 flex gap-2">
-                      <Link 
-                        href="/dashboard" 
-                        className="text-xs bg-purple-600/20 text-purple-400 hover:bg-purple-600/40 px-3 py-1 rounded font-medium transition"
-                      >
-                        Negotiate
-                      </Link>
+                   <Link 
+                     href={`/dashboard?email=${encodeURIComponent(item.email)}&reason=${encodeURIComponent(item.reason)}`} 
+                     className="text-xs bg-purple-600/20 text-purple-400 hover:bg-purple-600/40 px-3 py-1 rounded font-medium transition"
+                   >
+                     Run AI Negotiator
+                   </Link>
                       {/* TOMBOL DELETE BARU DI SINI */}
                       <button 
                         onClick={() => handleDeleteCustomer(item.id)}

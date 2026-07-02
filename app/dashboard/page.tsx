@@ -3,14 +3,16 @@
 import { createBrowserClient } from '@supabase/ssr';
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 export default function DashboardPage() {
   const [customerMessage, setCustomerMessage] = useState("");
   const [aiReply, setAiReply] = useState("");
   const [loading, setLoading] = useState(false);
   
-  // Ganti discount jadi customSolution
   const [settings, setSettings] = useState({ agentName: "Sarah", companyName: "", customSolution: "A 20% discount" });
+
+  const searchParams = useSearchParams();
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,23 +41,16 @@ export default function DashboardPage() {
     fetchSettings();
   }, [supabase]);
 
-  const negotiations = [
-    { email: "cole@startup.com", plan: "Pro $49/mo", reason: "Too expensive", status: "Saved" },
-    { email: "sarah@agency.io", plan: "Basic $19/mo", reason: "Missing features", status: "Lost" },
-    { email: "mike@corp.com", plan: "Enterprise", reason: "Switching to competitor", status: "Saved" },
-  ];
-
-  const handleNegotiate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Fungsi untuk memanggil AI (dipisah agar bisa dipanggil otomatis)
+  const fetchNegotiation = async (messageToNegotiate: string) => {
     setLoading(true);
     setAiReply("");
-    
     try {
       const res = await fetch("/api/negotiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          message: customerMessage,
+          message: messageToNegotiate,
           agentName: settings.agentName,
           companyName: settings.companyName,
           customSolution: settings.customSolution
@@ -68,6 +63,30 @@ export default function DashboardPage() {
     }
     setLoading(false);
   };
+
+  // Cek apakah ada data yang dibawa dari halaman Customers
+  useEffect(() => {
+    const email = searchParams.get('email');
+    const reason = searchParams.get('reason');
+    
+    if (email && reason) {
+      const autoMessage = `I am ${email} and I want to cancel because ${reason}.`;
+      setCustomerMessage(autoMessage);
+      // Langsung jalankan AI secara otomatis!
+      fetchNegotiation(autoMessage);
+    }
+  }, [searchParams]);
+
+  const handleNegotiate = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchNegotiation(customerMessage);
+  };
+
+  const negotiations = [
+    { email: "budi@startup.com", plan: "Pro $49/mo", reason: "Too expensive", status: "Saved" },
+    { email: "sarah@agency.io", plan: "Basic $19/mo", reason: "Missing features", status: "Lost" },
+    { email: "mike@corp.com", plan: "Enterprise", reason: "Switching to competitor", status: "Saved" },
+  ];
 
   return (
     <div className="flex min-h-screen bg-zinc-950 text-zinc-100">
