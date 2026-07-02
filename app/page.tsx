@@ -17,7 +17,6 @@ export default function Home() {
       const res = await fetch("/api/negotiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Kita kirim data default untuk demo di landing page
         body: JSON.stringify({ 
           message: customerMessage,
           agentName: "Sarah",
@@ -96,7 +95,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* DUMMY STATS (Bukti Sosial) */}
+        {/* DUMMY STATS */}
         <div className="w-full max-w-4xl mb-24">
           <h3 className="text-3xl font-bold mb-10 text-center">Trusted by Modern SaaS Companies</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
@@ -138,10 +137,7 @@ export default function Home() {
         </div>
 
         {/* PRICING SECTION */}
-        <div className="w-full max-w-5xl mb-24">
-          <h3 className="text-3xl font-bold mb-10 text-center">Simple, transparent pricing</h3>
-                  {/* PRICING SECTION */}
-        <div className="w-full max-w-3xl mb-24"> {/* Lebar dikurangi agar 2 kartu pas di tengah */}
+        <div className="w-full max-w-3xl mb-24">
           <h3 className="text-3xl font-bold mb-10 text-center">Simple, transparent pricing</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             {/* Starter */}
@@ -160,13 +156,13 @@ export default function Home() {
             </div>
 
             {/* Pro */}
-            <div className="bg-zinc-900 p-8 rounded-xl border-2 border-purple-600 flex flex-col relative shadow-2xl md:scale-105"> {/* Sedikit lebih besar */}
+            <div className="bg-zinc-900 p-8 rounded-xl border-2 border-purple-600 flex flex-col relative shadow-2xl md:scale-105">
               <span className="absolute top-0 right-0 bg-purple-600 text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-xl">MOST POPULAR</span>
               <h4 className="text-xl font-semibold mb-2">Pro</h4>
               <p className="text-zinc-400 text-sm mb-6">For growing SaaS teams</p>
               <p className="text-4xl font-bold mb-6">$49<span className="text-lg font-normal text-zinc-500">/mo</span></p>
               <ul className="text-zinc-400 text-sm space-y-2 mb-8 flex-grow">
-                <li>✅ Unlimited Negotiations</li>
+                <li>✅ 1,000 AI Negotiations/mo</li>
                 <li>✅ 5 Team Members</li>
                 <li>✅ AI Risk Scoring & Analytics</li>
                 <li>✅ Custom AI Strategies</li>
