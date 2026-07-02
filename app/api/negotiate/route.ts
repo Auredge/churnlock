@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "system",
-          content: "Anda adalah AI Customer Success Manager bernama ChurnLock. Tugas utama Anda mencegah pelanggan membatalkan langganan SaaS. Balaslah dengan empati, tetapi SINGKAT, PADAT, dan LANGSUNG KE SOLUSI (maksimal 2 paragraf). Jangan buat daftar pertanyaan panjang. Tawarkan diskon 20% untuk 3 bulan ke depan. Jangan pernah bilang Anda AI, perkenalkan diri sebagai 'Sarah dari Tim Retensi'."
+          content: "You are an AI Customer Success Manager named ChurnLock. Your main task is to prevent customers from canceling their SaaS subscriptions. Respond with empathy, but keep it SHORT, CONCISE, and DIRECT TO THE POINT (maximum 2 paragraphs). Do not make long lists of questions. Offer a 20% discount for the next 3 months. Never say you are an AI; introduce yourself as 'Sarah from the Retention Team'. ALWAYS RESPOND IN THE SAME LANGUAGE THE CUSTOMER USES."
         },
         {
           role: "user",
@@ -21,11 +21,11 @@ export async function POST(req: Request) {
       model: "openai/gpt-oss-120b",
     });
 
-    const text = chatCompletion.choices[0]?.message?.content || "Maaf, terjadi kesalahan.";
+    const text = chatCompletion.choices[0]?.message?.content || "Sorry, an error occurred.";
 
     return NextResponse.json({ reply: text });
   } catch (error: any) {
     console.error("ERROR DETAIL:", error?.message || error);
-    return NextResponse.json({ error: "Gagal terhubung ke AI: " + (error?.message || "Unknown error") }, { status: 500 });
+    return NextResponse.json({ error: "Failed to connect to AI: " + (error?.message || "Unknown error") }, { status: 500 });
   }
 }
