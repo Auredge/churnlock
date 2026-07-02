@@ -4,6 +4,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import FeedbackWidget from "@/components/FeedbackWidget";
 
 function DashboardContent() {
   const [customerMessage, setCustomerMessage] = useState("");
@@ -250,7 +251,7 @@ function DashboardContent() {
             </div>
           )}
         </div>
-
+        <FeedbackWidget />
       </main>
     </div>
   );
