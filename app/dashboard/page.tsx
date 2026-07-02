@@ -1,12 +1,12 @@
 "use client";
-export const dynamic = 'force-dynamic';
 
 import { createBrowserClient } from '@supabase/ssr';
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function DashboardPage() {
+// Kita pindahkan isi halaman ke dalam komponen ini
+function DashboardContent() {
   const [customerMessage, setCustomerMessage] = useState("");
   const [aiReply, setAiReply] = useState("");
   const [loading, setLoading] = useState(false);
@@ -42,7 +42,6 @@ export default function DashboardPage() {
     fetchSettings();
   }, [supabase]);
 
-  // Fungsi untuk memanggil AI (dipisah agar bisa dipanggil otomatis)
   const fetchNegotiation = async (messageToNegotiate: string) => {
     setLoading(true);
     setAiReply("");
@@ -65,7 +64,6 @@ export default function DashboardPage() {
     setLoading(false);
   };
 
-  // Cek apakah ada data yang dibawa dari halaman Customers
   useEffect(() => {
     const email = searchParams.get('email');
     const reason = searchParams.get('reason');
@@ -73,7 +71,6 @@ export default function DashboardPage() {
     if (email && reason) {
       const autoMessage = `I am ${email} and I want to cancel because ${reason}.`;
       setCustomerMessage(autoMessage);
-      // Langsung jalankan AI secara otomatis!
       fetchNegotiation(autoMessage);
     }
   }, [searchParams]);
@@ -198,5 +195,14 @@ export default function DashboardPage() {
 
       </main>
     </div>
+  );
+}
+
+// Bungkus komponen utama dengan Suspense di sini
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen bg-zinc-950 items-center justify-center text-zinc-500">Loading dashboard...</div>}>
+      <DashboardContent />
+    </Suspense>
   );
 }
