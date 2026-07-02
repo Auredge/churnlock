@@ -81,9 +81,9 @@ function DashboardContent() {
   };
 
   const negotiations = [
-    { email: "budi@startup.com", plan: "Pro $49/mo", reason: "Too expensive", status: "Saved" },
+    { email: "alex@techcorp.com", plan: "Enterprise $499/mo", reason: "Too many bugs", status: "Pending" },
+    { email: "cole@startup.com", plan: "Pro $49/mo", reason: "Too expensive", status: "Saved" },
     { email: "sarah@agency.io", plan: "Basic $19/mo", reason: "Missing features", status: "Lost" },
-    { email: "mike@corp.com", plan: "Enterprise", reason: "Switching to competitor", status: "Saved" },
   ];
 
   return (
@@ -146,12 +146,14 @@ function DashboardContent() {
                   <td className="p-4 text-sm text-zinc-400">{item.plan}</td>
                   <td className="p-4 text-sm text-zinc-400">{item.reason}</td>
                   <td className="p-4">
-                    {item.status === "Saved" ? (
-                      <span className="px-3 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded-full">Saved</span>
-                    ) : (
-                      <span className="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-medium rounded-full">Lost</span>
-                    )}
-                  </td>
+                  {item.status === "Saved" ? (
+                    <span className="px-3 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded-full">Saved</span>
+                  ) : item.status === "Pending" ? (
+                    <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 text-xs font-medium rounded-full">Pending</span>
+                  ) : (
+                    <span className="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-medium rounded-full">Lost</span>
+                  )}
+                </td>
                 </tr>
               ))}
             </tbody>
