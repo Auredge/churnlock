@@ -1,14 +1,37 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 export default function DashboardPage() {
-  // Data dummy untuk percobaan
+  const [customerMessage, setCustomerMessage] = useState("");
+  const [aiReply, setAiReply] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const negotiations = [
     { email: "budi@startup.com", plan: "Pro $49/mo", reason: "Too expensive", status: "Saved" },
     { email: "sarah@agency.io", plan: "Basic $19/mo", reason: "Missing features", status: "Lost" },
     { email: "mike@corp.com", plan: "Enterprise", reason: "Switching to competitor", status: "Saved" },
   ];
+
+  const handleNegotiate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setAiReply("");
+    
+    try {
+      const res = await fetch("/api/negotiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: customerMessage }),
+      });
+      const data = await res.json();
+      setAiReply(data.reply);
+    } catch (error) {
+      setAiReply("Maaf, terjadi kesalahan saat menghubungi AI.");
+    }
+    setLoading(false);
+  };
 
   return (
     <div className="flex min-h-screen bg-zinc-950 text-zinc-100">
@@ -30,7 +53,7 @@ export default function DashboardPage() {
       </aside>
 
       {/* KONTEN UTAMA */}
-      <main className="flex-1 p-10">
+      <main className="flex-1 p-10 overflow-y-auto">
         <h2 className="text-3xl font-bold mb-8">Dashboard</h2>
 
         {/* KARTU STATISTIK */}
@@ -50,7 +73,7 @@ export default function DashboardPage() {
         </div>
 
         {/* TABEL NEGOSIASI */}
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+        <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden mb-10">
           <div className="p-6 border-b border-zinc-800">
             <h3 className="text-xl font-semibold">Recent Negotiations</h3>
           </div>
@@ -80,6 +103,38 @@ export default function DashboardPage() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* KOTAK UJI COBA AI NEGOTIATOR */}
+        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6">
+          <h3 className="text-xl font-semibold mb-4 text-purple-400">🤖 Test AI Negotiator</h3>
+          <p className="text-zinc-400 text-sm mb-4">Tiru keluhan pelanggan di sini, lihat bagaimana AI ChurnLock menyelamatkan pelanggan Anda:</p>
+          
+          <form onSubmit={handleNegotiate} className="flex gap-4 mb-4">
+            <input
+              type="text"
+              value={customerMessage}
+              onChange={(e) => setCustomerMessage(e.target.value)}
+              placeholder="Contoh: Aplikasinya terlalu mahal, saya mau berhenti..."
+              className="flex-1 p-3 bg-zinc-800 rounded border border-zinc-700 text-white focus:outline-none focus:border-purple-500"
+              required
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded font-medium disabled:opacity-50"
+            >
+              {loading ? "Negotiating..." : "Negotiate"}
+            </button>
+          </form>
+
+          {aiReply && (
+            <div className="p-4 bg-zinc-800/50 rounded border border-zinc-700 text-zinc-200 whitespace-pre-wrap">
+              <span className="text-green-400 font-bold text-sm">AI ChurnLock:</span>
+              <br />
+              {aiReply}
+            </div>
+          )}
         </div>
 
       </main>
