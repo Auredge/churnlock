@@ -54,7 +54,7 @@ export default function Home() {
         
         <div className="flex gap-4 mb-16">
           <Link href="/login" className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded font-medium">
-            Start Free Trial
+           Start 7-Day Free Trial
           </Link>
           <button onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })} className="border border-zinc-700 hover:bg-zinc-800 px-6 py-3 rounded font-medium">
             Try Live Demo
@@ -168,7 +168,7 @@ export default function Home() {
                 <li>✅ Custom AI Strategies</li>
               </ul>
               <Link href="/login" className="text-center bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded font-medium transition">
-                Start Free Trial
+              Start 7-Day Free Trial
               </Link>
             </div>
           </div>
